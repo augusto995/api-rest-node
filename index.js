@@ -21,6 +21,14 @@ app.use(express.json())
 
 //Crear rutas
 
+//RUTAS
+const rutas_articulos = require("./rutas/articulo")
+
+//CArgo las rutas
+app.use("/api", rutas_articulos)
+
+
+//Rutas prueba harcodeadas
 app.get("/probando", (req, rest) => {
     console.log("Se ejecuto endpoint")
     return rest.status(200).json([{
