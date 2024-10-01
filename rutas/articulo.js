@@ -9,5 +9,6 @@ router.get("/ruta-de-prueba", ArticuloControlador.prueba)
 
 //Ruta util
 router.post("/crear", ArticuloControlador.crear)
+router.get("/articulos", ArticuloControlador.listar)
 
 module.exports = router;
