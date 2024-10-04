@@ -9,6 +9,7 @@ const prueba = (req, res) => {
 }
 
 /*
+Codigo viejo
 const crear = (req, res) => {
     //recoger parametros por post a guardar 
     let parametros = req.body;
@@ -49,40 +50,39 @@ const crear = (req, res) => {
 }
 */
 
-const crear = async (req, res) => {
-    // Recoger parámetros por POST a guardar 
+const crear = async(req, res) => {
+    //Recogemos parametros por post a guardar
     let parametros = req.body;
 
-    // Validar datos
+    //Validar datos
     try {
         let validar_titulo = !validator.isEmpty(parametros.titulo) &&
-                            validator.isLength(parametros.titulo, { min: 5, max: undefined });
+                            validator.isLength(parametros.titulo, {min: 5 , max: undefined});
         let validar_contenido = !validator.isEmpty(parametros.contenido);
 
-        if (!validar_titulo || !validar_contenido) {
-            throw new Error("No se ha validado la informacion!!!");
+        if(!validar_contenido || !validar_titulo){
+            throw new Error("No se ha validado la informacion");
         }
-
-        // Crear el objeto
+        //Crear el objeto
         const articulo = new Articulo(parametros);
 
-        // Guardar el artículo en la base de datos
+        //Guardar el articulo en la base de datos
         const articuloGuardado = await articulo.save();
 
-        // Devolver resultado
+        //Devolver resultado
         return res.status(200).json({
             status: "success",
             articulo: articuloGuardado,
             mensaje: "Articulo creado con exito"
-        });
-
+        })
+        
     } catch (error) {
         return res.status(400).json({
             status: "error",
             mensaje: error.message || "No se ha guardado el articulo"
-        });
+        })
     }
-};
+}
 
 /*
 const listar = (req, res) => {
@@ -105,7 +105,9 @@ const listar = (req, res) => {
 
 const listar = async (req, res) => {
     try {
-        const articulos = await Articulo.find({}).exec(); // Asegúrate de que el modelo está bien nombrado
+        const articulos = await Articulo.find({})
+                                .sort({fecha: -1})
+                                .exec(); 
 
         if (!articulos || articulos.length === 0) {
             return res.status(404).json({
@@ -127,11 +129,68 @@ const listar = async (req, res) => {
     }
 };
 
+const uno = async (req, res) => {
+    try {
+        // Recoger el ID de los parámetros de la solicitud
+        let id = req.params.id;
 
+        // Buscar el artículo por ID usando await
+        const articulo = await Articulo.findById(id);
+
+        // Si no se encuentra el artículo o hay algún problema
+        if (!articulo) {
+            return res.status(404).json({
+                status: "error",
+                mensaje: "No se ha encontrado el artículo"
+            });
+        }
+
+        // Devolver el artículo encontrado
+        return res.status(200).json({
+            status: "success",
+            articulo
+        });
+
+    } catch (error) {
+        // Manejar cualquier error (como si el ID es inválido)
+        return res.status(500).json({
+            status: "error",
+            mensaje: error.message || "Error al obtener el artículo"
+        });
+    }
+};
+
+const borrar = async (req, res) => {
+    try {
+        let articulo_id = req.params.id;
+
+        const articulo = await Articulo.findOneAndDelete({ _id: articulo_id });
+
+        if (!articulo) {
+            return res.status(404).json({
+                status: "error",
+                mensaje: "Artículo no encontrado"
+            });
+        }
+
+        return res.status(200).json({
+            status: "success",
+            mensaje: "Artículo borrado con éxito",
+            articulo: articulo
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            mensaje: error.message || "Error al eliminar el artículo"
+        });
+    }
+};
 
 
 module.exports = {
     prueba,
     crear,
-    listar
+    listar,
+    uno,
+    borrar
 }
