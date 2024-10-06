@@ -1,4 +1,6 @@
 const validator = require("validator");
+
+
 const validarArticulo = (parametros) => {
     let validar_titulo =
       !validator.isEmpty(parametros.titulo) &&
