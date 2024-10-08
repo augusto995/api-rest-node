@@ -1,4 +1,4 @@
-
+const fs = require("fs")
 const Articulo = require("../modelos/Articulo");
 const { validarArticulo } = require("../helpers/validar");
 
@@ -214,6 +214,35 @@ const editar = async (req, res) => {
     }
   };
   
+  const subir = (req, res) => {
+
+    if(!req.file && !req.files){
+      return res.status(404).json({
+        status:"error",
+        mensaje: "Peticion invalida"
+      })
+    }
+
+    let archivo = req.file.originalname
+    let archivo_split = archivo.split("\.")
+    let extension = archivo_split[1];
+
+    if(extension != "png" && extension != "jpg" && extension != "jpeg" && extension != "gif"){
+      fs.unlink(req.file.path, (error) => {
+        return res.status(400).json({
+          status:"error",
+          mensaje: "Imagen invalida"
+        })
+      })
+    } else {
+      return res.status(200).json({
+        status: "success",
+        files: req.file
+      });
+    }
+
+    
+  }
 
 module.exports = {
   prueba,
@@ -222,4 +251,5 @@ module.exports = {
   uno,
   borrar,
   editar,
+  subir
 };
