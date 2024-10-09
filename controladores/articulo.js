@@ -3,12 +3,6 @@ const Articulo = require("../modelos/Articulo");
 const { validarArticulo } = require("../helpers/validar");
 
 
-const prueba = (req, res) => {
-  return res.status(200).json({
-    mensaje: "Soy una accion de prueba en mi controlador de articulos",
-  });
-};
-
 /*
 Codigo viejo
 const crear = (req, res) => {
@@ -214,42 +208,137 @@ const editar = async (req, res) => {
     }
   };
   
-  const subir = (req, res) => {
-
-    if(!req.file && !req.files){
+  const subir = async (req, res) => {
+    // Verificar si no se subió ningún archivo
+    if (!req.file && !req.files) {
       return res.status(404).json({
-        status:"error",
-        mensaje: "Peticion invalida"
-      })
-    }
-
-    let archivo = req.file.originalname
-    let archivo_split = archivo.split("\.")
-    let extension = archivo_split[1];
-
-    if(extension != "png" && extension != "jpg" && extension != "jpeg" && extension != "gif"){
-      fs.unlink(req.file.path, (error) => {
-        return res.status(400).json({
-          status:"error",
-          mensaje: "Imagen invalida"
-        })
-      })
-    } else {
-      return res.status(200).json({
-        status: "success",
-        files: req.file
+        status: "error",
+        mensaje: "Petición inválida",
       });
     }
+  
+    // Nombre y extensión del archivo
+    let archivo = req.file.originalname;
+    let archivo_split = archivo.split("\.");
+    let extension = archivo_split[1];
+  
+    // Comprobar extensiones permitidas
+    if (extension != "png" && extension != "jpg" && extension != "jpeg" && extension != "gif") {
+      // Eliminar el archivo si la extensión no es válida
+      fs.unlink(req.file.path, (error) => {
+        return res.status(400).json({
+          status: "error",
+          mensaje: "Imagen inválida",
+        });
+      });
+    } else {
+      // Si la imagen es válida, actualizamos el artículo
+      try {
+        let articuloId = req.params.id; // ID del artículo desde los parámetros de la URL
+  
+        // Actualizar el campo de imagen del artículo
+        const articuloActualizado = await Articulo.findOneAndUpdate(
+          { _id: articuloId },
+          { imagen: req.file.filename }, // Actualiza el campo "imagen" del artículo
+          { new: true } // Devuelve el artículo actualizado
+        );
+  
+        if (!articuloActualizado) {
+          return res.status(404).json({
+            status: "error",
+            mensaje: "No se ha encontrado el artículo para actualizar",
+          });
+        }
+  
+        return res.status(200).json({
+          status: "success",
+          mensaje: "Imagen subida y artículo actualizado con éxito",
+          articulo: articuloActualizado,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          status: "error",
+          mensaje: error.message || "Error al actualizar el artículo",
+        });
+      }
+    }
+  };
 
-    
+  /*
+  const buscador = (req, res) => {
+
+    //Sacar el string de busqueda
+    let busqueda = req.params.busqueda;
+    //Find OR
+    Articulo.find({ "$or": [
+      { "titulo": {"$regex": busqueda, "$options": "i"}},
+      { "contenido": {"$regex": busqueda, "$options": "i"}},
+
+    ]})
+    .sort({fecha: -1})
+    .exec((error, articulosEncontrados) => {
+
+      if(error || !articulosEncontrados || articulosEncontrados.length <= 0){
+        return res.status(404).json({
+          status: "error",
+          mensaje: "No se ha encontrado el artículos"
+        })
+      }
+      return res.status(200).json({
+        status: "success",
+        articulos: articulosEncontrados
+      })
+
+    })
   }
+   */
+
+  const buscador = async (req, res) => {
+    try {
+        let busqueda = req.params.busqueda;
+
+        if (!busqueda || busqueda.trim() === "") {
+            return res.status(400).json({
+                status: "error",
+                mensaje: "La búsqueda no puede estar vacía."
+            });
+        }
+
+        const articulosEncontrados = await Articulo.find({
+            "$or": [
+                { "titulo": { "$regex": busqueda, "$options": "i" } },
+                { "contenido": { "$regex": busqueda, "$options": "i" } },
+            ]
+        })
+        .sort({ fecha: -1 });
+
+        if (articulosEncontrados.length <= 0) {
+            return res.status(404).json({
+                status: "error",
+                mensaje: "No se encontraron artículos que coincidan con la búsqueda."
+            });
+        }
+
+        return res.status(200).json({
+            status: "success",
+            articulos: articulosEncontrados
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            status: "error",
+            mensaje: "Error en el servidor: " + error.message
+        });
+    }
+};
+
 
 module.exports = {
-  prueba,
   crear,
   listar,
   uno,
   borrar,
   editar,
-  subir
+  subir,
+  buscador
 };
